@@ -25,7 +25,7 @@ def build_dict(url):
         icons.decompose()
 
     courses = []
-    course_tables = soup.find_all(attrs={'class': 'class-list-course-list'})
+    course_tables = soup.find_all(class_='class-list-course-list')
     for course_table in course_tables:
 
         tickets = []
@@ -38,19 +38,19 @@ def build_dict(url):
                 prereq = prereq.lstrip('Prerequisite: ')
 
         course_info = {
-            'units' : course_table.find(attrs={'class': 'class-list-unit'}).text.strip()[7:],
+            'units' : course_table.find(class_='class-list-unit').text.strip()[7:],
             'prereq': prereq,
             }
 
         course = {
-                'course_id': course_table.find(attrs={'class': 'course-id'}).text.strip(),
-                'course_title' : course_table.find(attrs={'class': 'class-list-course-title'}).text.strip(),
+                'course_id': course_table.find(class_='course-id').text.strip(),
+                'course_title' : course_table.find(class_='class-list-course-title').text.strip(),
                 'course_info' : course_info,
-                'course_description' : course_table.find(attrs={'class': 'class-list-course-desc'}).text.strip(),
+                'course_description' : course_table.find(class_='class-list-course-desc').text.strip(),
                 'tickets': tickets,
                 }
         courses.append(course)
-        for section in course_table.find_all(attrs={'class': 'class-list-info-method'}):
+        for section in course_table.find_all(class_='class-list-info-method'):
             
             # remove all small tags
             for smalls in section.find_all(class_='ins-method'):
@@ -79,8 +79,8 @@ def build_dict(url):
                 'room': lab_room,
             }
             ticket = {
-                    'number': section.find(attrs={'class': 'class-list-info-ticket'}).text.strip(),
-                    'status': section.find(attrs={'class': 'class-list-info-status'}).text.strip(),
+                    'number': section.find(class_='class-list-info-ticket').text.strip(),
+                    'status': section.find(class_='class-list-info-status').text.strip(),
                     'lecture': lecture,
                     'lab': lab,                   
                     'instructor': (section.find(attrs={'title': 'INSTRUCTOR'}).text.strip()),
