@@ -24,6 +24,18 @@ table th, table td{
 '''
 
 def _start_and_duration(timestr):
+    '''Parse start hour and duration from a time span string
+
+    Strings look like "9:00AM - 10:15".
+    This function does some very simplistic rounding to the next half-hour.
+
+    Returns (start_hour, duration) where start_hour is the hour in 24-hour
+    format and duration is the number of half-hours to the end.
+
+    TODO: it might help to add doctests to this.
+    '''
+
+    # parsing string
     start_time, end_time = timestr.split(' - ')
 
     start_hour, start_minute = start_time.split(':')
@@ -37,11 +49,13 @@ def _start_and_duration(timestr):
     end_hour = int(end_hour)
     end_minute = int(end_minute)
 
+    # convert to 24-hour
     if start_period == 'PM' and start_hour != 12:
         start_hour += 12
     if end_hour < start_hour:
         end_hour += 12
 
+    # simple half-hour rounding
     if end_minute > 30:
         end_hour += 1
     else:
@@ -50,6 +64,7 @@ def _start_and_duration(timestr):
     if start_minute != 0:
         start_hour += 0.5
 
+    # duration in half-hours
     duration = int((end_hour - start_hour) * 2)
     return start_hour, duration
 
@@ -90,10 +105,12 @@ def _convert_to_table(table_data):
 
 
 def extract_table_data(courses):
+    # {instructor: {day: {start_hour: {label: room, span: duration}}}}
     instructors = defaultdict(
             lambda: defaultdict(
                 lambda: defaultdict(
                     lambda: {'label': '', 'span': 1})))
+    # {room: {day: {start_hour: {label: instructor, span: duration}}}}
     rooms = defaultdict(
             lambda: defaultdict(
                 lambda: defaultdict(
@@ -107,7 +124,7 @@ def extract_table_data(courses):
                 days = ticket[session]['day']
                 time = ticket[session]['time']
                 start, duration = _start_and_duration(time)
-                start = int(start*2)
+                start = int(start*2) # columns are half-hours, not hours
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
                     room_cell = {
@@ -120,6 +137,7 @@ def extract_table_data(courses):
                             'span': duration
                             }
                     instructors[instructor][day][start] = instructor_cell
+                    # insert Nones so that the HTML generator doesn't add extra <td>s
                     for i in range(1, duration):
                         rooms[room][day][start+i] = None
                         instructors[instructor][day][start+i] = None
@@ -130,6 +148,7 @@ def extract_table_data(courses):
     return room_table, instructor_table
 
 def generate_html(table):
+    # colgroups are used to apply column-wise CSS styles
     colgroups = [
             '<colgroup><col></colgroup>',
     ]
@@ -141,12 +160,14 @@ def generate_html(table):
     headers = [
             '<tr><td></td>',
     ]
+    # header for each day
     for day in DAYS:
         cols = table['day_end'][day] - table['day_start'][day]
         headers.append('<th colspan="{}">{}</th>'.format(cols, day))
     headers.append('</tr>')
     headers.append('<tr><td></td>')
 
+    # hours in each day
     for day in DAYS:
         cols = table['day_end'][day] - table['day_start'][day]
         cols //= 2
