@@ -4,6 +4,8 @@ from collections import defaultdict
 year = 2018
 semester = 3
 
+DAYS = ('M', 'T', 'W', 'Th', 'F')
+
 STYLE = '''
 <style>
 table {
@@ -50,11 +52,6 @@ def _start_and_duration(timestr):
 
     duration = int((end_hour - start_hour) * 2)
     return start_hour, duration
-
-DAYS = ('M', 'T', 'W', 'Th', 'F')
-def _cell_sort_key(cell):
-    key = cell['start'] + (DAYS.index(cell['day']) * 24)
-    return key
 
 def _convert_to_table(table_data):
     rows = []
