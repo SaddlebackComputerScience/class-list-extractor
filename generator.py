@@ -8,6 +8,9 @@ DAYS = ('M', 'T', 'W', 'Th', 'F')
 
 STYLE = '''
 <style>
+/*************************************
+*    === CSS For HTML Table ===
+*************************************/
 table {
     width: 100%;
     border-collapse: collapse;
@@ -15,10 +18,13 @@ table {
     table-layout: fixed;
     white-space: nowrap;
 }
+
+/* -- Colors for Headers and Data Borders -- */
 table th, table td{
     border: 1px solid black;
 }
 
+/* -- Make sure the width of the cols is correct -- */
 table td {
   white-space: nowrap;
   overflow: hidden;
@@ -26,6 +32,7 @@ table td {
   width: 80px;
 }
 
+/* -- Handles the color-swapping on adjacent columns -- */
 .day col:nth-child(odd){
     background: lightgray;
 }
