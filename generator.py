@@ -81,10 +81,11 @@ def extract_table_data(courses):
                     lambda: {'label': '', 'span': 1})))
 
     for course in courses:
+        course_id = course.get('course_id',[])
         for ticket in course.get('tickets', []):
             instructor = ticket['instructor']
             for session in ('lecture', 'lab'):
-                room = ticket[session]['room']
+                room = course_id
                 days = ticket[session]['day']
                 time = ticket[session]['time']
                 start, duration = _start_and_duration(time)
