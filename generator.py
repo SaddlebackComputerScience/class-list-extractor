@@ -9,11 +9,23 @@ DAYS = ('M', 'T', 'W', 'Th', 'F')
 STYLE = '''
 <style>
 table {
+    width: 100%;
     border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    white-space: nowrap;
 }
 table th, table td{
     border: 1px solid black;
 }
+
+table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 80px;
+}
+
 .day col:nth-child(odd){
     background: lightgray;
 }
@@ -81,17 +93,17 @@ def extract_table_data(courses):
                     lambda: {'label': '', 'span': 1})))
 
     for course in courses:
-        course_id = course.get('course_id',[])
+        course_id = course.get('course_id')
         for ticket in course.get('tickets', []):
             instructor = ticket['instructor']
             for session in ('lecture', 'lab'):
-                room = course_id
+                room = ticket[session]['room']
                 days = ticket[session]['day']
                 time = ticket[session]['time']
                 start, duration = _start_and_duration(time)
                 start = int(start*2) # columns are half-hours, not hours
                 room_cell = { 'label': instructor, 'span': duration }
-                instructor_cell = { 'label': room, 'span': duration }
+                instructor_cell = { 'label': course_id, 'span': duration }
                 rooms[room][days][start] = room_cell
                 instructors[instructor][days][start] = instructor_cell
                 for i in range(1, duration):
@@ -209,6 +221,7 @@ if __name__ == '__main__':
 
     html = STYLE
     html += generate_html(room_table, days)
+    html += '<br><br>'
     html += generate_html(instructor_table, days)
     htmlFileName = 'courses{year}-{semester}.html'
     with open(htmlFileName.format(year=year, semester=semester), 'w') as file:
