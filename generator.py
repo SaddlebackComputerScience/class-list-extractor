@@ -68,42 +68,6 @@ def _start_and_duration(timestr):
     duration = int((end_hour - start_hour) * 2)
     return start_hour, duration
 
-def convert_to_table(table_data, days=DAYS):
-    rows = []
-    table = {
-            'rows': rows,
-            'day_start': {day: 48 for day in days},
-            'day_end': {day: 0 for day in days},
-            }
-
-    # find start time and end time of each day
-    for head in table_data.keys():
-        for day in days:
-            if day in table_data[head]:
-                day_table = table_data[head][day]
-                for time in day_table.keys():
-                    slot = day_table[time]
-                    if time < table['day_start'][day]:
-                        table['day_start'][day] = time
-                    if slot and time + slot['span'] > table['day_end'][day]:
-                        table['day_end'][day] = time + slot['span']
-
-    # fill in cells for each day
-    for head in sorted(table_data.keys()):
-        cells = []
-        row = {'heading': head, 'cells': cells}
-        rows.append(row)
-
-        for day in days:
-            day_table = table_data[head][day]
-            for time in range(table['day_start'][day], table['day_end'][day]):
-                slot = day_table[time]
-                if slot:
-                    cells.append(slot)
-
-    return table
-
-
 def extract_table_data(courses):
     # {instructor: {day: {start_hour: {label: room, span: duration}}}}
     instructors = defaultdict(
@@ -142,6 +106,42 @@ def extract_table_data(courses):
                         instructors[instructor][day][start+i] = None
 
     return rooms, instructors
+
+def convert_to_table(table_data, days=DAYS):
+    rows = []
+    table = {
+            'rows': rows,
+            'day_start': {day: 48 for day in days},
+            'day_end': {day: 0 for day in days},
+            }
+
+    # find start time and end time of each day
+    for head in table_data.keys():
+        for day in days:
+            if day in table_data[head]:
+                day_table = table_data[head][day]
+                for time in day_table.keys():
+                    slot = day_table[time]
+                    if time < table['day_start'][day]:
+                        table['day_start'][day] = time
+                    if slot and time + slot['span'] > table['day_end'][day]:
+                        table['day_end'][day] = time + slot['span']
+
+    # fill in cells for each day
+    for head in sorted(table_data.keys()):
+        cells = []
+        row = {'heading': head, 'cells': cells}
+        rows.append(row)
+
+        for day in days:
+            day_table = table_data[head][day]
+            for time in range(table['day_start'][day], table['day_end'][day]):
+                slot = day_table[time]
+                if slot:
+                    cells.append(slot)
+
+    return table
+
 
 def generate_html(table, days=DAYS):
     # colgroups are used to apply column-wise CSS styles
