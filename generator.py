@@ -102,7 +102,6 @@ def extract_table_data(courses):
     for course in courses:
         course_id = course['course_id']
         course_name = course_id.split()[-1]
-        course['course_id'] = course_name
         for ticket in course.get('tickets', []):
             instructor = ticket['instructor']
             for session in ('lecture', 'lab'):
@@ -121,7 +120,10 @@ def extract_table_data(courses):
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
                     instructor_last = instructor.split()[-1]
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 8857219... fixed small error, i think
                     room_cell = {
                             'label': instructor_last,
                             'span': duration
