@@ -100,7 +100,8 @@ def extract_table_data(courses):
                     lambda: {'label': '', 'span': 1})))
 
     for course in courses:
-        course_id = course.get('course_id')
+        course_id = course['course_id']
+        course_name = course_id.split()[-1]
         for ticket in course.get('tickets', []):
             instructor = ticket['instructor']
             for session in ('lecture', 'lab'):
@@ -118,7 +119,16 @@ def extract_table_data(courses):
                     instructors[instructor][days][start+i] = None
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
+                    instructor_last = instructor.split()[-1]
+                    room_cell = {
+                            'label': instructor_last,
+                            'span': duration
+                            }
                     rooms[room][day][start] = room_cell
+                    instructor_cell = {
+                            'label': course_name,
+                            'span': duration
+                            }
                     instructors[instructor][day][start] = instructor_cell
                     # insert Nones so that the HTML generator doesn't add extra <td>s
                     for i in range(1, duration):
