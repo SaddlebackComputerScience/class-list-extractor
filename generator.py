@@ -8,12 +8,31 @@ DAYS = ('M', 'T', 'W', 'Th', 'F')
 
 STYLE = '''
 <style>
+/*************************************
+*    === CSS For HTML Table ===
+*************************************/
 table {
+    width: 100%;
     border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    white-space: nowrap;
 }
+
+/* -- Colors for Headers and Data Borders -- */
 table th, table td{
     border: 1px solid black;
 }
+
+/* -- Make sure the width of the cols is correct -- */
+table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 80px;
+}
+
+/* -- Handles the color-swapping on adjacent columns -- */
 .day col:nth-child(odd){
     background: lightgray;
 }
@@ -68,42 +87,6 @@ def _start_and_duration(timestr):
     duration = int((end_hour - start_hour) * 2)
     return start_hour, duration
 
-def _convert_to_table(table_data):
-    rows = []
-    table = {
-            'rows': rows,
-            'day_start': {day: 48 for day in DAYS},
-            'day_end': {day: 0 for day in DAYS},
-            }
-
-    # find start time and end time of each day
-    for head in table_data.keys():
-        for day in DAYS:
-            if day in table_data[head]:
-                day_table = table_data[head][day]
-                for time in day_table.keys():
-                    slot = day_table[time]
-                    if time < table['day_start'][day]:
-                        table['day_start'][day] = time
-                    if slot and time + slot['span'] > table['day_end'][day]:
-                        table['day_end'][day] = time + slot['span']
-
-    # fill in cells for each day
-    for head in sorted(table_data.keys()):
-        cells = []
-        row = {'heading': head, 'cells': cells}
-        rows.append(row)
-
-        for day in DAYS:
-            day_table = table_data[head][day]
-            for time in range(table['day_start'][day], table['day_end'][day]):
-                slot = day_table[time]
-                if slot:
-                    cells.append(slot)
-
-    return table
-
-
 def extract_table_data(courses):
     # {instructor: {day: {start_hour: {label: room, span: duration}}}}
     instructors = defaultdict(
@@ -127,6 +110,13 @@ def extract_table_data(courses):
                 time = ticket[session]['time']
                 start, duration = _start_and_duration(time)
                 start = int(start*2) # columns are half-hours, not hours
+                room_cell = { 'label': instructor, 'span': duration }
+                instructor_cell = { 'label': course_id, 'span': duration }
+                rooms[room][days][start] = room_cell
+                instructors[instructor][days][start] = instructor_cell
+                for i in range(1, duration):
+                    rooms[room][days][start+i] = None
+                    instructors[instructor][days][start+i] = None
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
                     instructor_last = instructor.split()[-1]
@@ -145,17 +135,50 @@ def extract_table_data(courses):
                         rooms[room][day][start+i] = None
                         instructors[instructor][day][start+i] = None
 
-    room_table = _convert_to_table(rooms)
-    instructor_table = _convert_to_table(instructors)
+    return rooms, instructors
 
-    return room_table, instructor_table
+def convert_to_table(table_data, days=DAYS):
+    rows = []
+    table = {
+            'rows': rows,
+            'day_start': {day: 48 for day in days},
+            'day_end': {day: 0 for day in days},
+            }
 
-def generate_html(table):
+    # find start time and end time of each day
+    for head in table_data.keys():
+        for day in days:
+            if day in table_data[head]:
+                day_table = table_data[head][day]
+                for time in day_table.keys():
+                    slot = day_table[time]
+                    if time < table['day_start'][day]:
+                        table['day_start'][day] = time
+                    if slot and time + slot['span'] > table['day_end'][day]:
+                        table['day_end'][day] = time + slot['span']
+
+    # fill in cells for each day
+    for head in sorted(table_data.keys()):
+        cells = []
+        row = {'heading': head, 'cells': cells}
+        rows.append(row)
+
+        for day in days:
+            day_table = table_data[head][day]
+            for time in range(table['day_start'][day], table['day_end'][day]):
+                slot = day_table[time]
+                if slot:
+                    cells.append(slot)
+
+    return table
+
+
+def generate_html(table, days=DAYS):
     # colgroups are used to apply column-wise CSS styles
     colgroups = [
             '<colgroup><col></colgroup>',
     ]
-    for day in DAYS:
+    for day in days:
         cols = '<col/>' * (table['day_end'][day] - table['day_start'][day])
         colgroups.append('<colgroup class="{} day">{}</colgroup>'.format(
             day, cols))
@@ -164,14 +187,14 @@ def generate_html(table):
             '<tr><td></td>',
     ]
     # header for each day
-    for day in DAYS:
+    for day in days:
         cols = table['day_end'][day] - table['day_start'][day]
         headers.append('<th colspan="{}">{}</th>'.format(cols, day))
     headers.append('</tr>')
     headers.append('<tr><td></td>')
 
     # hours in each day
-    for day in DAYS:
+    for day in days:
         cols = table['day_end'][day] - table['day_start'][day]
         cols //= 2
         for col in range(cols):
@@ -208,10 +231,15 @@ if __name__ == '__main__':
     with open(cFileName.format(year=year, semester=semester), 'r') as file:
         courses = json.load(file)
 
-    room_table, instructor_table = extract_table_data(courses)
+    rooms, instructors = extract_table_data(courses)
+    days = ('M W', 'T Th', 'F')
+    room_table = convert_to_table(rooms, days)
+    instructor_table = convert_to_table(instructors, days)
+
     html = STYLE
-    html += generate_html(room_table)
-    html += generate_html(instructor_table)
+    html += generate_html(room_table, days)
+    html += '<br><br>'
+    html += generate_html(instructor_table, days)
     htmlFileName = 'courses{year}-{semester}.html'
     with open(htmlFileName.format(year=year, semester=semester), 'w') as file:
         file.write(html)

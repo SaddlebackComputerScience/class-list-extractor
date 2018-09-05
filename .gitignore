@@ -1,5 +1,7 @@
 # script outputs
 courses*.json
+courses*.html
+courses*.csv
 tickets*.txt
 
 # Byte-compiled / optimized / DLL files
