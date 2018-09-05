@@ -121,7 +121,7 @@ def extract_table_data(courses):
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
                     instructor_last = instructor.split()[-1]
-                    
+
                     room_cell = {
                             'label': instructor_last,
                             'span': duration
@@ -131,7 +131,6 @@ def extract_table_data(courses):
                             'label': course_name,
                             'span': duration
                             }
-                    print(instructor_cell)
                     instructors[instructor][day][start] = instructor_cell
                     # insert Nones so that the HTML generator doesn't add extra <td>s
                     for i in range(1, duration):
