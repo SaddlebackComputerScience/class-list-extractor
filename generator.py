@@ -102,6 +102,7 @@ def extract_table_data(courses):
     for course in courses:
         course_id = course['course_id']
         course_name = course_id.split()[-1]
+        course['course_id'] = course_name
         for ticket in course.get('tickets', []):
             instructor = ticket['instructor']
             for session in ('lecture', 'lab'):
@@ -111,7 +112,7 @@ def extract_table_data(courses):
                 start, duration = _start_and_duration(time)
                 start = int(start*2) # columns are half-hours, not hours
                 room_cell = { 'label': instructor, 'span': duration }
-                instructor_cell = { 'label': course_id, 'span': duration }
+                instructor_cell = { 'label': course_name, 'span': duration }
                 rooms[room][days][start] = room_cell
                 instructors[instructor][days][start] = instructor_cell
                 for i in range(1, duration):
@@ -120,6 +121,7 @@ def extract_table_data(courses):
                 for day in days.split():
                     print(course['course_id'], instructor, session, day, start/2, room)
                     instructor_last = instructor.split()[-1]
+                    
                     room_cell = {
                             'label': instructor_last,
                             'span': duration
@@ -129,6 +131,7 @@ def extract_table_data(courses):
                             'label': course_name,
                             'span': duration
                             }
+                    print(instructor_cell)
                     instructors[instructor][day][start] = instructor_cell
                     # insert Nones so that the HTML generator doesn't add extra <td>s
                     for i in range(1, duration):
